@@ -1,0 +1,9 @@
+Passo 1 - Instalar dependencias
+pip install opencv-python numpy pyyaml
+pip install git+https://github.com/uoip/mono-slam-python
+
+Passo 2 - Criar slam_navigation.py
+.Tracking contínuo da pose da câmara 
+.Trajetória acumulada(mapa 2.5D)
+.Suporte para qualquer video
+.Integração simples com YOLO
