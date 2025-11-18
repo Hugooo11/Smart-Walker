@@ -7,3 +7,6 @@ Passo 2 - Criar slam_navigation.py
 .Trajetória acumulada(mapa 2.5D)
 .Suporte para qualquer video
 .Integração simples com YOLO
+
+
+info-----> https://github.com/JakobEngel/orbslam2-python
