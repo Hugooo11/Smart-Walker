@@ -120,6 +120,12 @@ open -a TextEdit <ficheiro>
 Exemplo:
 open -a TextEdit /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker-definitions.h
 
+1. Ver linhas específicas do Tracker.h
+Para veres um intervalo de linhas (tipo o que já estavas a fazer):
+nl -ba /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker.h | sed -n '230,320p'
+
+2. Procurar texto e ver com contexto (grep)
+grep -n "opengv::sac" /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker.h
 
 =========================
 2. Navegar no terminal
