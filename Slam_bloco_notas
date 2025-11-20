@@ -89,3 +89,145 @@ make -j8
 ✔ OpenCV instalado e reconhecido
 ❗ Kimera — em fase final (falta remover OpenGV)
 ============================================================
+============================================================
+            B L O C O   D E   T R U Q U E S
+============================================================
+
+=========================
+1. Abrir ficheiros no terminal
+=========================
+
+Abrir ficheiro em VIM:
+vim <ficheiro>
+
+Exemplo:
+vim /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker-definitions.h
+
+Abrir ficheiro em nano (mais fácil):
+nano <ficheiro>
+
+Exemplo:
+nano /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker-definitions.h
+
+Abrir ficheiro no TextEdit (interface gráfica):
+open -a TextEdit <ficheiro>
+
+Exemplo:
+open -a TextEdit /Users/hugosantos11/Kimera-VIO/include/kimera-vio/frontend/Tracker-definitions.h
+
+
+=========================
+2. Navegar no terminal
+=========================
+
+Ir para a pasta:
+cd <pasta>
+
+Voltar atrás:
+cd ..
+
+Ir para o diretório principal (home):
+cd ~
+
+Listar ficheiros:
+ls
+ls -l     (detalhado)
+ls -a     (inclui ocultos)
+
+Ver caminho completo:
+pwd
+
+
+=========================
+3. Procurar ficheiros
+=========================
+
+find ~ -name "<nome>"
+Exemplo:
+find ~ -name "Tracker-definitions.h"
+
+Procurar dentro dos ficheiros (grep):
+grep -R "texto" <pasta>
+grep -R "opengv" .
+
+=========================
+4. Criar / apagar pastas
+=========================
+
+Criar pasta:
+mkdir <nome>
+
+Apagar pasta:
+rm -rf <pasta>
+
+Exemplo:
+rm -rf build
+
+
+=========================
+5. Editar ficheiros com nano (rápido)
+=========================
+
+Abrir ficheiro:
+nano ficheiro.cpp
+
+Guardar:
+CTRL + O
+
+Sair:
+CTRL + X
+
+Cortar linha:
+CTRL + K
+
+Colar linha:
+CTRL + U
+
+
+=========================
+6. Editar ficheiros com vim (avançado)
+=========================
+
+Entrar no modo edição:
+i
+
+Guardar e sair:
+ESC
+:wq
+
+Sair sem guardar:
+ESC
+:q!
+
+Procurar texto:
+/
+(Ex: /opengv)
+
+Substituir texto:
+:%s/antigo/novo/g
+
+
+=========================
+7. Ver ficheiros grandes
+=========================
+
+more <ficheiro>
+less <ficheiro>
+
+Sair:
+q
+
+
+=========================
+8. Copiar e mover ficheiros
+=========================
+
+Copiar:
+cp origem destino
+
+Mover / renomear:
+mv origem destino
+
+
+============================================================
+
