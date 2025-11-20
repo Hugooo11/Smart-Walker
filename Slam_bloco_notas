@@ -47,7 +47,12 @@ Instalação:
 
 Flag:
 -DDBoW2_DIR=/usr/local/lib/cmake/DBoW2
+=======================
+cd ~/Kimera-VIO
+mkdir -p build
+cd build
 
+=======================
 
 =======================
 5. CMake FINAL para compilar Kimera-VIO
