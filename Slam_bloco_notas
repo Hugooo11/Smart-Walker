@@ -1,0 +1,91 @@
+============================================================
+          B L O C O   D E   N O T A S   O F I C I A L
+============================================================
+
+=======================
+1. OpenCV (Homebrew)
+=======================
+Localização:
+/opt/homebrew/Cellar/opencv/4.12.0_15
+
+Flag obrigatória no CMake:
+-DOpenCV_DIR=/opt/homebrew/opt/opencv/lib/cmake/opencv4
+
+
+=======================
+2. Eigen 3.4.0 (manual)
+=======================
+Instalado em:
+~/eigen-3.4/include/eigen3
+~/eigen-3.4/share/eigen3/cmake
+
+Flags obrigatórias:
+-DEigen3_INCLUDE_DIR=$HOME/eigen-3.4/include/eigen3
+-DEigen3_DIR=$HOME/eigen-3.4/share/eigen3/cmake
+
+Fix obrigatório no M2 ARM:
+export CMAKE_CXX_FLAGS="-DEIGEN_MAX_ALIGN_BYTES=0"
+(add_definitions(-DEIGEN_MAX_ALIGN_BYTES=0) no CMake)
+
+
+=======================
+3. GTSAM 4.2
+=======================
+CMake config instalado em:
+/usr/local/lib/cmake/GTSAM
+
+Flag:
+-DGTSAM_DIR=/usr/local/lib/cmake/GTSAM
+
+
+=======================
+4. DBoW2
+=======================
+Instalação:
+/usr/local/include/DBoW2
+/usr/local/lib/cmake/DBoW2
+
+Flag:
+-DDBoW2_DIR=/usr/local/lib/cmake/DBoW2
+
+
+=======================
+5. CMake FINAL para compilar Kimera-VIO
+=======================
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DKIMERA_BUILD_TESTS=OFF \
+  -DOpenCV_DIR=/opt/homebrew/opt/opencv/lib/cmake/opencv4 \
+  -DGTSAM_DIR=/usr/local/lib/cmake/GTSAM \
+  -DDBoW2_DIR=/usr/local/lib/cmake/DBoW2 \
+  -DEigen3_INCLUDE_DIR=$HOME/eigen-3.4/include/eigen3 \
+  -DEigen3_DIR=$HOME/eigen-3.4/share/eigen3/cmake
+
+
+=======================
+6. Compilação
+=======================
+make -j8
+
+
+=======================
+7. Dependências desativadas (importante)
+=======================
+❌ OpenGV — REMOVIDO
+→ Não incluir:
+    #include <opengv/...>
+→ Remover chamadas a RANSAC de OpenGV
+→ Não usar FindOpenGV no CMake
+
+
+=======================
+8. Estado atual do projeto
+=======================
+✔ GTSAM compilado e instalado
+✔ Eigen 3.4 a funcionar
+✔ Boost OK
+✔ TBB OK
+✔ DBoW2 instalado
+✔ OpenCV instalado e reconhecido
+❗ Kimera — em fase final (falta remover OpenGV)
+============================================================
