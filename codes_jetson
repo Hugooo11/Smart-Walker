@@ -17,3 +17,171 @@ PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
   --input-name images \
   --save-video ~/walker/out/det_overlay.mp4 \
   --no-show
+
+
+
+-------------------------------------------------------------notas de estrutura----------------------------------------------------------------
+========================================
+SMART WALKER — ESTRUTURA MENTAL + PROCESSO
+========================================
+
+VISÃO GERAL
+-----------
+O sistema é um PIPELINE modular.
+Nada depende diretamente de hardware específico.
+A câmara é apenas uma FONTE DE IMAGEM.
+
+Fonte (mp4 / webcam / RTSP)
+        ↓
+Preprocess (resize + letterbox + normalização)
+        ↓
+Inferência (TensorRT)
+        ↓
+Pós-process (decode + NMS)
+        ↓
+Visualização / Gravação / Dataset
+        ↓
+(Futuro) SLAM + Fusão
+
+
+========================================
+ARQUITETURA DISTRIBUÍDA
+========================================
+
+MAC (DESENVOLVIMENTO / TREINO)
+- Anotação (Roboflow ou similar)
+- Treino YOLO / Segmentação
+- Exportação ONNX
+
+JETSON NANO (INFERÊNCIA / ROBÓTICA)
+- TensorRT (FP16)
+- Inferência em tempo real
+- SLAM
+- Fusão lógica/geométrica
+
+RASPBERRY PI (AQUISIÇÃO)
+- Câmara
+- Streaming RTSP/MJPEG
+- Sem processamento pesado
+
+
+========================================
+ESTRUTURA DE PROJETO (JETSON)
+========================================
+
+~/walker/
+├── engines/
+│   ├── yolo11_det_fp16.engine
+│   └── seg_fp16.engine            (futuro)
+│
+├── scripts/
+│   ├── det_trt.py                 # deteção + gravação
+│   └── seg_trt.py                 # segmentação (futuro)
+│
+├── src/
+│   ├── trt_runtime.py             # wrapper TensorRT (genérico)
+│   └── video_io.py                # mp4 / webcam / RTSP
+│
+├── data/
+│   └── raw/
+│       └── sessionXX/
+│           ├── images/
+│           │   ├── 000001.jpg
+│           │   ├── 000002.jpg
+│           │   └── ...
+│           ├── timestamps.csv
+│           ├── source.txt
+│           └── notes.txt
+│
+├── out/
+│   ├── det_overlay.mp4
+│   └── debug_frames/
+│
+└── logs/
+
+
+========================================
+MODOS DE FUNCIONAMENTO
+========================================
+
+1) TESTE
+- source: mp4
+- objetivo: validar pipeline, boxes, FPS
+
+2) CAPTURA DATASET
+- source: mp4 / câmara / RTSP
+- grava frames crus + timestamps
+- baixa FPS (ex: 5)
+
+3) TEMPO REAL
+- source: câmara / RTSP
+- inferência contínua
+- overlay + decisões (futuro)
+
+
+========================================
+CAPTURA DE DADOS (DATASET)
+========================================
+
+Gravar:
+- imagens JPG (frames crus)
+- timestamps (epoch ms)
+- origem do stream
+
+Não gravar:
+- inferência
+- overlays
+- decisões
+
+Regra:
+- Variedade > quantidade
+- Diferentes luzes, pisos, obstáculos
+
+
+========================================
+TREINO
+========================================
+
+Local:
+- SEMPRE no Mac / Cloud
+
+Fluxo:
+- imagens → anotação
+- treino YOLO / Segmentação
+- export ONNX
+- conversão TensorRT na Jetson
+
+Nunca:
+- treinar na Jetson
+- usar PyTorch na Jetson
+
+
+========================================
+ESTADO ATUAL
+========================================
+
+- TensorRT: OK
+- YOLO FP16: OK
+- Pipeline vídeo: OK
+- Gravação dataset: OK
+- Câmara física: ainda não
+
+Sistema:
+- PRONTO PARA RECEBER CÂMARA
+- SEM BLOQUEIOS TÉCNICOS
+
+
+========================================
+PRÓXIMOS PASSOS NATURAIS
+========================================
+
+1) Captar imagens reais quando a câmara chegar
+2) Anotar dataset
+3) Treinar modelo próprio
+4) Integrar segmentação
+5) Integrar SLAM
+6) Fusão para navegação segura
+
+========================================
+FIM
+========================================
