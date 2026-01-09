@@ -8,3 +8,12 @@ PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
   --record-dir ~/walker/data/raw/session01 \
   --record-fps 5 \
   --no-show
+
+B) Guardar um vídeo com overlay (para validar boxes)
+------------------------------------------------------------
+PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
+  --engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source /home/jetson/walker/video/test.mp4 \
+  --input-name images \
+  --save-video ~/walker/out/det_overlay.mp4 \
+  --no-show
