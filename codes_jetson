@@ -185,3 +185,100 @@ PRÓXIMOS PASSOS NATURAIS
 ========================================
 FIM
 ========================================
+Passo 0 — preparar sessão (1 minuto)
+--------------------------------------------------------
+cd ~/walker
+export PYTHONPATH=~/walker
+--------------------------------------------------------
+Passo 1 — “baseline”: correr deteção no mp4 (visual)
+Objetivo: ver a janela e garantir que não crasha.
+Passo 1-> retirar a linha qdo for para fazer com a camara real.
+--------------------------------------------------------
+PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
+  --engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source /home/jetson/walker/video/test.mp4 \
+  --input-name images \
+  --conf 0.30 \
+  --iou 0.45 \
+  --show
+--------------------------------------------------------
+Passo 2 — validar sem janela (guardar vídeo com overlay)
+Isto serve para:
+validar boxes sem depender de imshow
+fica um artefacto para veres depois
+--------------------------------------------------------
+PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
+  --engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source /home/jetson/walker/video/test.mp4 \
+  --input-name images \
+  --conf 0.30 \
+  --iou 0.45 \
+  --save-video ~/walker/out/det_overlay.mp4 \
+  --no-show
+confirmar:
+ls -lh ~/walker/out/det_overlay.mp4
+testa abrir (se tiveres player):
+ffplay ~/walker/out/det_overlay.mp4
+# ou
+vlc ~/walker/out/det_overlay.mp4
+--------------------------------------------------------
+Passo 3 — criar “captura de dataset” (sem câmara, usando o mp4)
+Aqui o objetivo é criar já um dataset cru com estrutura certa:
+--------------------------------------------------------
+PYTHONPATH=~/walker python3 ~/walker/scripts/det_trt.py \
+  --engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source /home/jetson/walker/video/test.mp4 \
+  --input-name images \
+  --record-dir ~/walker/data/raw/session01 \
+  --record-fps 5 \
+  --max-frames 600 \
+  --no-show
+
+Isto grava ~600 frames lidos (mas só guarda ~5 fps), o que dá ~2 minutos de material.
+Confirma a estrutura:
+ls -R ~/walker/data/raw/session01 | head -n 50
+Deves ter:
+images/000000.jpg, 000030.jpg, etc. (dependendo do sampling)
+timestamps.csv
+source.txt
+Verifica quantas imagens geraste:
+ls ~/walker/data/raw/session01/images | wc -l
+E abre 1–2 imagens:
+python3 - << 'PY'
+import cv2, glob
+imgs = sorted(glob.glob('/home/jetson/walker/data/raw/session01/images/*.jpg'))[:3]
+print("samples:", imgs)
+for p in imgs:
+    im = cv2.imread(p)
+    print(p, im.shape)
+PY
+--------------------------------------------------------
+Passo 4 — “empacotar” para levar ao Mac (treino/anotação)
+O objetivo é transferir só a pasta session01.
+Cria um zip:
+--------------------------------------------------------
+cd ~/walker/data/raw
+zip -r session01.zip session01
+ls -lh session01.zip
+--------------------------------------------------------
+Agora podes copiar para o Mac por SCP (exemplo):
+scp session01.zip <user>@<ip_do_mac>:/Users/<user>/Downloads/
+--------------------------------------------------------
+Passo 5 — no Mac (sem treinar ainda): preparar anotação
+No Mac:
+descompactar session01.zip
+subir images/ para Roboflow (ou outra tool)
+anotar (classes que escolheres)
+export YOLO/seg conforme o modelo
+Mesmo sem câmara, isto já te permite treinar um “primeiro modelo” só para validar pipeline fim-a-fim.
+--------------------------------------------------------
+Passo 6 — ciclo de iteração “sem câmara” (o que repetes)
+Enquanto não chega a câmara, repetes:
+arranjar mp4s diferentes (interiores/corredores/escadas)
+--record-dir sessionXX --record-fps 5
+anotar e treinar
+export ONNX
+converter para TensorRT na Jetson
+voltar a testar com --save-video e comparar
+
+
