@@ -1,0 +1,39 @@
+1️- Confirma o IP da Jetson
+Na Jetson:
+ip a
+2️- No teu PC (Mac ou Linux)
+Vai até à pasta onde está o ficheiro
+Copia para a Jetson:
+scp vertical_e_horizontal.py jetson@IP_DA_JETSON:/home/jetson/walker/scripts/
+3️- Confirma na Jetson
+4️- Corre o script na Jetson:
+- Como correr na Jetson (já hoje, sem segmentação real)
+Teste com mp4 + chão fake (metade inferior)
+-------------------------------------------------------------
+export PYTHONPATH=~/walker
+python3 ~/walker/scripts/vertical_horizontal_trt.py \
+  --det-engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source ~/walker/video/test.mp4 \
+  --show
+-------------------------------------------------------------
+Guardar vídeo anotado
+-------------------------------------------------------------
+export PYTHONPATH=~/walker
+python3 ~/walker/scripts/vertical_horizontal_trt.py \
+  --det-engine ~/walker/engines/yolo11_det_fp16.engine \
+  --source ~/walker/video/test.mp4 \
+  --save-video ~/walker/out/vh_trt_overlay.mp4
+-------------------------------------------------------------
+Quando tiveres segmentação TRT (futuro)
+Aí ligas assim:
+-------------------------------------------------------------
+python3 ~/walker/scripts/vertical_horizontal_trt.py \
+  --det-engine ~/walker/engines/yolo11_det_fp16.engine \
+  --seg-engine ~/walker/engines/seg_fp16.engine \
+  --seg-floor-class 0 \
+  --source ~/walker/video/test.mp4 \
+  --show
+  -------------------------------------------------------------
+  No script acima eu assumi que classe 0 = person (COCO).
+Se o teu detetor não for COCO, diz-me qual é o índice da classe “person” no teu modelo, e eu mudo para algo tipo:
+--det-person-class 0 (parâmetro) e fica genérico.
