@@ -37,3 +37,9 @@ python3 ~/walker/scripts/vertical_horizontal_trt.py \
   No script acima eu assumi que classe 0 = person (COCO).
 Se o teu detetor não for COCO, diz-me qual é o índice da classe “person” no teu modelo, e eu mudo para algo tipo:
 --det-person-class 0 (parâmetro) e fica genérico.
+COCO significa Common Objects in Context.
+É um dataset padrão usado para treinar e avaliar modelos de visão computacional (YOLO, Faster R-CNN, etc.).
+Em termos práticos:
+É um conjunto enorme de imagens anotadas
+Com classes pré-definidas
+Usado como default por muitos modelos YOLO
