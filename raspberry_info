@@ -1,3 +1,143 @@
 username:pi
 pass:1234
 hotspot name: pi-hotspot 
+
+encravou o teclado:
+========================================================
+RESET LIMPO – RASPBERRY PI ZERO 2W → JETSON NANO (USB)
+========================================================
+
+OBJETIVO FINAL
+--------------
+- Raspberry Pi Zero 2W = sensor (câmara)
+- Jetson Nano = processamento (IA)
+- Ligação entre ambos = USB direto (OTG)
+- Raspberry fica headless (sem teclado/monitor) NO FIM
+- NUNCA misturar teclado + USB gadget ao mesmo tempo
+
+--------------------------------------------------------
+FASE 0 – REGRAVAR CARTÃO SD (OBRIGATÓRIO)
+--------------------------------------------------------
+No PC/Mac:
+1) Abrir Raspberry Pi Imager
+2) OS: Raspberry Pi OS Lite (32-bit)
+   (NÃO desktop, NÃO experimental)
+3) Storage: cartão SD correto
+4) ⚙️ Advanced options:
+   - Enable SSH: ON
+   - Username: pi
+   - Password: definir e guardar
+   - Wi-Fi: opcional (2.4 GHz apenas)
+   - Locale / teclado: PT ou EN (guardar bem)
+5) Write
+6) Ejectar cartão SD com segurança
+
+--------------------------------------------------------
+FASE 1 – PRIMEIRO ARRANQUE (SEM JETSON)
+--------------------------------------------------------
+LIGAÇÕES CORRETAS:
+- HDMI → monitor
+- Teclado USB → porta USB do Pi
+- Alimentação → PWR IN
+- NÃO ligar Jetson
+- NÃO usar OTG aqui
+
+Confirmar:
+- Teclado escreve
+- Login funciona
+- Sistema está normal
+
+--------------------------------------------------------
+FASE 2 – CONFIGURAR USB OTG (FAZER UMA ÚNICA VEZ)
+--------------------------------------------------------
+
+NO RASPBERRY (COM TECLADO):
+
+1) Editar config.txt
+   sudo nano /boot/firmware/config.txt
+
+   No FIM adicionar:
+   dtoverlay=dwc2
+   enable_uart=1
+
+2) Editar cmdline.txt
+   sudo nano /boot/firmware/cmdline.txt
+
+   REGRAS:
+   - UMA única linha
+   - NÃO carregar Enter
+   - NÃO apagar o resto
+
+   Garantir que EXISTE:
+   console=ttyGS0,115200
+
+   (pode coexistir com console=serial0,115200)
+
+3) Guardar e reiniciar:
+   sudo reboot
+
+--------------------------------------------------------
+FASE 3 – TESTE ANTES DE DESLIGAR TECLADO
+--------------------------------------------------------
+Ainda com teclado e monitor:
+
+- O Pi deve arrancar normal
+- NÃO ligar Jetson ainda
+- NÃO testar teclado na porta OTG depois disto
+
+Se arrancar → OK
+
+--------------------------------------------------------
+FASE 4 – PASSAR PARA HEADLESS (PONTO SEM RETORNO)
+--------------------------------------------------------
+1) Desligar o Pi
+2) Retirar teclado e monitor
+3) Ligar:
+   - Raspberry USB (OTG) → USB da Jetson
+   - Alimentação no PWR IN
+
+REGRA DE OURO:
+--------------
+A partir daqui:
+- NUNCA mais ligar teclado ao Pi
+- USB do Pi passa a ser SÓ para a Jetson
+
+--------------------------------------------------------
+FASE 5 – ACESSO AO PI PELA JETSON
+--------------------------------------------------------
+Na Jetson:
+
+1) Confirmar dispositivo:
+   ls /dev/ttyACM*
+
+   Esperado:
+   /dev/ttyACM0
+
+2) Ligar consola:
+   sudo screen /dev/ttyACM0 115200
+
+3) Carregar ENTER
+
+Esperado:
+- Login do Raspberry Pi aparece
+
+Isto substitui teclado + monitor.
+
+--------------------------------------------------------
+REGRAS PARA NÃO VOLTAR A PARTIR TUDO
+--------------------------------------------------------
+- USB gadget e teclado NÃO coexistem
+- Nunca ligar teclado depois de ativar dwc2
+- Se precisar de teclado outra vez → regravar SD
+- NÃO insistir em recuperar estados quebrados
+- Configurar OTG só no FINAL
+
+--------------------------------------------------------
+ESTADO FINAL DO SISTEMA
+--------------------------------------------------------
+- Raspberry: headless, sensor, câmara
+- Jetson: host USB, processamento
+- Comunicação: USB serial / dados
+- Wi-Fi: opcional, nunca crítico
+
+========================================================
