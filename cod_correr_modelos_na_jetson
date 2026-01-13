@@ -1,0 +1,12 @@
+Correr det_seg
+
+PYTHONPATH=~/walker python3 ~/walker/scripts/det_seg_trt.py \
+  --det-engine ~/walker/engines/walker_det_fp16.engine \
+  --seg-engine ~/walker/engines/walker_seg_fp16.engine \
+  --source ~/walker/video/test.mp4 \
+  --input-name images \
+  --conf-det 0.30 --iou-det 0.45 \
+  --conf-seg 0.25 --iou-seg 0.45 \
+  --save-video ~/walker/out/walker_detseg_overlay.mp4 \
+  -- rotate 90 \
+  --no-show
