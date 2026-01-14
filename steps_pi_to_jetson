@@ -1,0 +1,158 @@
+========================================================
+RESET LIMPO – RASPBERRY PI ZERO 2W (EDIÇÃO FINAL VIA MAC)
+========================================================
+
+OBJETIVO
+--------
+- Raspberry Pi Zero 2W como sensor (câmara)
+- Sistema estável com câmara testada
+- USB OTG ativado NO FIM
+- cmdline.txt editado via SSH no Mac (não no Pi)
+- Depois disto: Pi fica headless
+
+========================================================
+FASE 0 – REGRAVAR CARTÃO SD
+========================================================
+No Mac / PC (Raspberry Pi Imager):
+
+Device:
+- Raspberry Pi Zero 2 W
+
+OS:
+- Raspberry Pi OS (Legacy)
+- Raspberry Pi OS Lite (32-bit)
+  (base Bookworm, NÃO trixie, NÃO 64-bit)
+
+Storage:
+- Cartão SD correto
+
+Advanced options (OBRIGATÓRIO):
+- Enable SSH: ON
+- Username: pi
+- Password: definir
+- Wi-Fi: hotspot (2.4 GHz)
+- Locale / teclado: confirmar
+
+→ Write
+→ Eject com segurança
+
+========================================================
+FASE 1 – PRIMEIRO ARRANQUE (COM TECLADO)
+========================================================
+Ligações:
+- HDMI → monitor
+- Teclado USB → Pi
+- Alimentação → PWR IN
+- NÃO ligar Jetson
+
+Confirmar:
+- Login funciona
+- Teclado responde
+
+Confirmar OS:
+cat /etc/os-release
+Esperado:
+VERSION_CODENAME=bookworm
+
+========================================================
+FASE 2 – ATUALIZAR SISTEMA
+========================================================
+sudo apt update && sudo apt full-upgrade -y
+sudo reboot
+
+========================================================
+FASE 3 – CÂMARA (OBRIGATÓRIO)
+========================================================
+Instalar:
+sudo apt install -y libcamera-apps rpicam-apps python3-picamera2
+
+Testes:
+rpicam-hello
+rpicam-still -o test.jpg
+
+Teste Python:
+nano test_cam.py
+
+(conteúdo)
+from picamera2 import Picamera2
+picam2 = Picamera2()
+picam2.start_and_capture_file("py_test.jpg")
+print("OK")
+
+Executar:
+python3 test_cam.py
+
+========================================================
+FASE 4 – FERRAMENTAS FINAIS
+========================================================
+sudo apt install -y python3-pip python3-venv python3-serial screen git
+
+========================================================
+FASE 5 – PREPARAR OTG (SEM EDITAR cmdline AINDA)
+========================================================
+Editar APENAS config.txt no Pi:
+
+sudo nano /boot/firmware/config.txt
+
+Adicionar no FIM:
+dtoverlay=dwc2
+enable_uart=1
+
+Guardar e sair.
+
+NÃO editar cmdline.txt aqui.
+NÃO reiniciar ainda.
+
+========================================================
+FASE 6 – EDITAR cmdline.txt VIA MAC (PASSO CRÍTICO)
+========================================================
+1) Garantir Pi ligado ao Wi-Fi
+2) No Mac:
+
+ssh pi@pi.local
+(ou ssh pi@IP_DO_PI)
+
+3) No SSH:
+sudo nano /boot/firmware/cmdline.txt
+
+4) APAGAR TODA A LINHA
+5) COLAR A LINHA COMPLETA (fornecida à parte)
+   (toda numa linha, sem ENTER no meio)
+
+6) Guardar e sair.
+
+========================================================
+FASE 7 – REBOOT FINAL
+========================================================
+sudo reboot
+
+Após reboot:
+- Sistema deve arrancar
+- Teclado ainda funciona
+- NÃO ligar Jetson ainda
+
+Confirmar:
+lsmod | grep dwc2
+dmesg | grep ttyGS
+
+========================================================
+FASE 8 – PONTO SEM RETORNO
+========================================================
+1) Desligar o Pi
+2) Retirar teclado e monitor
+3) Ligar:
+   - USB OTG do Pi → USB da Jetson
+   - Alimentação no Pi
+
+Na Jetson:
+ls /dev/ttyACM*
+sudo screen /dev/ttyACM0 115200
+
+========================================================
+REGRAS DE OURO
+========================================================
+- Nunca editar cmdline.txt no Pi
+- Nunca misturar teclado + USB gadget
+- Se OTG falhar → regravar SD
+- Não insistir em estados quebrados
+========================================================
