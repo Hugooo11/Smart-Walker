@@ -1,0 +1,215 @@
+========================================================
+PLANO FINAL FUNCIONAL – RASPBERRY PI ZERO 2W
+USB ETHERNET + STREAM DE VÍDEO (SEM SERIAL, SEM WIFI)
+========================================================
+
+OBJETIVO
+--------
+- Raspberry Pi Zero 2W como SENSOR (câmara CSI)
+- Jetson Nano escreve TODO o código
+- Vídeo em tempo real na Jetson
+- Ligação física Pi ↔ Jetson por cabo USB (g_ether)
+- Pi fica headless SEM perder controlo
+- ZERO uso de ttyGS0 / serial
+- ZERO dependência de Wi-Fi
+- ZERO regravações adicionais de SD
+
+========================================================
+PRINCÍPIO CRÍTICO (MOTIVO DOS FALHANÇOS ANTERIORES)
+========================================================
+- No Pi Zero 2W, a interface usb0 só aparece DEPOIS do boot
+- dhcpcd.conf NÃO funciona para IP fixo em usb0
+- Solução correta: systemd service que ESPERA usb0 existir
+
+========================================================
+ESTADO INICIAL ASSUMIDO
+========================================================
+- Pi com Raspberry Pi OS Lite 32-bit (Bookworm)
+- Teclado + HDMI AINDA ligados
+- Câmara já testada e funcional
+- Stream MJPEG funcional em tmux
+- OTG AINDA NÃO ATIVADO
+
+========================================================
+FASE A – PREPARAR CONTROLO GARANTIDO (ANTES DO OTG)
+========================================================
+
+1) Garantir SSH ativo (redundância)
+----------------------------------
+sudo systemctl enable ssh
+
+--------------------------------------------------------
+
+2) Criar script que espera pela interface usb0
+----------------------------------------------
+sudo nano /usr/local/bin/usb0-up.sh
+
+CONTEÚDO:
+----------------------------------------------
+#!/bin/bash
+
+IFACE=usb0
+
+for i in {1..30}; do
+    if ip link show $IFACE >/dev/null 2>&1; then
+        ip addr add 192.168.7.2/24 dev $IFACE
+        ip link set $IFACE up
+        exit 0
+    fi
+    sleep 1
+done
+
+exit 1
+----------------------------------------------
+
+Permissões:
+sudo chmod +x /usr/local/bin/usb0-up.sh
+
+--------------------------------------------------------
+
+3) Criar serviço systemd (SOLUÇÃO REAL)
+---------------------------------------
+sudo nano /etc/systemd/system/usb0-ip.service
+
+CONTEÚDO:
+----------------------------------------------
+[Unit]
+Description=Configure USB0 IP after gadget init
+After=network.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/usb0-up.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+----------------------------------------------
+
+Ativar serviço:
+sudo systemctl daemon-reexec
+sudo systemctl enable usb0-ip.service
+
+========================================================
+FASE B – ATIVAR USB ETHERNET (OTG) UMA ÚNICA VEZ
+========================================================
+
+4) Ativar dwc2
+--------------
+sudo nano /boot/firmware/config.txt
+
+Adicionar NO FIM:
+----------------------------------------------
+dtoverlay=dwc2
+----------------------------------------------
+
+--------------------------------------------------------
+
+5) Ativar g_ether no boot
+------------------------
+sudo nano /boot/firmware/cmdline.txt
+
+⚠️ UMA ÚNICA LINHA ⚠️
+Adicionar APENAS:
+----------------------------------------------
+modules-load=dwc2,g_ether
+----------------------------------------------
+
+(sem apagar o resto da linha)
+
+--------------------------------------------------------
+
+6) Reboot ÚNICO (ainda com teclado)
+-----------------------------------
+sudo reboot
+
+========================================================
+FASE C – VALIDAR ANTES DE PERDER TECLADO
+========================================================
+
+7) Confirmar IP do usb0 no Pi
+-----------------------------
+ip a
+
+Esperado:
+----------------------------------------------
+usb0: inet 192.168.7.2/24
+----------------------------------------------
+
+SE NÃO APARECER → PARAR AQUI
+
+========================================================
+FASE D – PONTO SEM RETORNO (AGORA É SEGURO)
+========================================================
+
+8) Tornar Pi headless
+--------------------
+- Desligar teclado e HDMI
+- Ligar:
+  micro-USB do Pi (porta do teclado)
+  → USB-A da Jetson
+- Alimentar o Pi
+
+========================================================
+FASE E – NA JETSON (CONTROLO TOTAL)
+========================================================
+
+9) Configurar IP da Jetson
+-------------------------
+sudo ip addr add 192.168.7.1/24 dev usb0
+sudo ip link set usb0 up
+
+--------------------------------------------------------
+
+10) Testar ligação
+------------------
+ping 192.168.7.2
+
+--------------------------------------------------------
+
+11) Entrar no Pi
+----------------
+ssh pi@192.168.7.2
+
+========================================================
+FASE F – STREAM DE VÍDEO NA JETSON
+========================================================
+
+python3
+
+----------------------------------------------
+import cv2
+
+cap = cv2.VideoCapture("http://192.168.7.2:8080/video")
+
+while True:
+    ok, frame = cap.read()
+    if not ok:
+        break
+    cv2.imshow("Pi Camera", frame)
+    if cv2.waitKey(1) == 27:
+        break
+----------------------------------------------
+
+========================================================
+RESULTADO FINAL GARANTIDO
+========================================================
+- USB Ethernet funcional SEM DHCP
+- IP do Pi sempre disponível
+- Jetson controla tudo
+- Pi headless sem bloqueios
+- Stream em tempo real
+- ZERO regravações adicionais
+- Arquitetura robusta e defensável
+
+========================================================
+REGRAS ABSOLUTAS
+========================================================
+- NUNCA usar dhcpcd.conf para usb0
+- NUNCA perder teclado sem canal garantido
+- USB no Pi Zero = timing tardio
+- systemd > dhcpcd
+- Se isto falhar → hardware defeituoso (raro)
+
+========================================================
