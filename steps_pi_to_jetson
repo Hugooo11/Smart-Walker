@@ -139,6 +139,10 @@ sudo apt install -y tmux
 Criar sessão:
 tmux new -s camera
 
+entrar na sessão já criada:
+tmux ls
+tmux attach -t camera
+
 Dentro do tmux:
 python3 ~/camera/stream_mjpeg.py
 
