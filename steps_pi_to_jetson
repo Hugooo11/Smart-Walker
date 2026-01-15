@@ -248,7 +248,7 @@ Reboot ÚNICO:
 sudo reboot
 
 ========================================================
-FASE 8 – PONTO SEM RETORNO
+FASE 7 – PONTO SEM RETORNO
 ========================================================
 1) Desligar monitor e teclado do Pi
 2) Ligar:
@@ -257,7 +257,7 @@ FASE 8 – PONTO SEM RETORNO
 3) Alimentar o Pi
 
 ========================================================
-FASE 9 – NA JETSON
+FASE 8 – NA JETSON
 ========================================================
 sudo ip addr add 192.168.7.1/24 dev usb0
 sudo ip link set usb0 up
