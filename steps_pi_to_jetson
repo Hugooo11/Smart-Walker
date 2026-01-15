@@ -1,17 +1,20 @@
 ========================================================
-RESET LIMPO – RASPBERRY PI ZERO 2W (EDIÇÃO FINAL VIA MAC)
+RESET LIMPO – RASPBERRY PI ZERO 2W
+USB ETHERNET + STREAM DE VÍDEO (VERSÃO FINAL)
 ========================================================
 
 OBJETIVO
 --------
-- Raspberry Pi Zero 2W como sensor (câmara)
-- Sistema estável com câmara testada
-- USB OTG ativado NO FIM
-- cmdline.txt editado via SSH no Mac (não no Pi)
-- Depois disto: Pi fica headless
+- Raspberry Pi Zero 2W como SENSOR (câmara CSI)
+- Jetson Nano escreve TODO o código
+- Vídeo em tempo real na Jetson
+- Ligação física Pi ↔ Jetson por cabo USB
+- Pi arranca, transmite vídeo e não precisa de monitor
+- tmux validado ANTES de perder teclado
+- NENHUM uso de ttyGS0 / serial
 
 ========================================================
-FASE 0 – REGRAVAR CARTÃO SD
+FASE 0 – REGRAVAR CARTÃO SD (BASE LIMPA)
 ========================================================
 No Mac / PC (Raspberry Pi Imager):
 
@@ -21,29 +24,18 @@ Device:
 OS:
 - Raspberry Pi OS (Legacy)
 - Raspberry Pi OS Lite (32-bit)
-  (base Bookworm, NÃO trixie, NÃO 64-bit)
+  (Bookworm, NÃO trixie, NÃO 64-bit)
 
-Storage:
-- Cartão SD correto
-
-Advanced options (OBRIGATÓRIO):
+Advanced options:
 - Enable SSH: ON
 - Username: pi
 - Password: definir
-- Wi-Fi: hotspot (2.4 GHz)
 - Locale / teclado: confirmar
+- Wi-Fi: opcional (não é obrigatório para o objetivo final)
 
 → Write
-→ Eject com segurança
-=======================================================
-WI-fi
-sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
-network={
-    ssid="NOME_DO_HOTSPOT"
-    psk="PASSWORD_DO_HOTSPOT"
-    key_mgmt=WPA-PSK
-}
-sudo reboot
+→ Eject
+
 ========================================================
 FASE 1 – PRIMEIRO ARRANQUE (COM TECLADO)
 ========================================================
@@ -72,95 +64,243 @@ sudo reboot
 FASE 3 – CÂMARA (OBRIGATÓRIO)
 ========================================================
 Instalar:
-sudo apt install -y libcamera-apps rpicam-apps python3-picamera2
+sudo apt install -y libcamera-apps rpicam-apps python3-picamera2 python3-opencv python3-flask
 
 Testes:
 rpicam-hello
 rpicam-still -o test.jpg
 
-Teste Python:
+Teste Python (resolução baixa – Zero 2W):
 nano test_cam.py
 
-(conteúdo)
+CONTEÚDO:
+----------------------------------------
 from picamera2 import Picamera2
+
 picam2 = Picamera2()
-picam2.start_and_capture_file("py_test.jpg")
+config = picam2.create_still_configuration(
+    main={"size": (640, 480)}
+)
+picam2.configure(config)
+picam2.start()
+picam2.capture_file("py_test.jpg")
 print("OK")
+----------------------------------------
 
 Executar:
 python3 test_cam.py
 
 ========================================================
-FASE 4 – FERRAMENTAS FINAIS
+FASE 4 – STREAM DE VÍDEO (NO PI)
 ========================================================
-sudo apt install -y python3-pip python3-venv python3-serial screen git
+Criar diretório:
+mkdir -p ~/camera
+cd ~/camera
+
+Criar servidor MJPEG:
+nano stream_mjpeg.py
+
+CONTEÚDO:
+----------------------------------------
+from flask import Flask, Response
+import cv2
+
+app = Flask(__name__)
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FPS, 15)
+
+def gen():
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            continue
+        ok, jpg = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        if not ok:
+            continue
+        yield (b"--frame\r\n"
+               b"Content-Type: image/jpeg\r\n\r\n" + jpg.tobytes() + b"\r\n")
+
+@app.route("/video")
+def video():
+    return Response(gen(),
+        mimetype="multipart/x-mixed-replace; boundary=frame")
+
+app.run(host="0.0.0.0", port=8080, threaded=True)
+----------------------------------------
 
 ========================================================
-FASE 5 – PREPARAR OTG (SEM EDITAR cmdline AINDA)
+FASE 5 – VALIDAR tmux (ANTES DE PERDER TECLADO)
 ========================================================
-Editar APENAS config.txt no Pi:
+Instalar:
+sudo apt install -y tmux
 
+Criar sessão:
+tmux new -s camera
+
+Dentro do tmux:
+python3 ~/camera/stream_mjpeg.py
+
+Sair SEM matar:
+Ctrl+B depois D
+
+Confirmar:
+tmux ls
+
+Voltar:
+tmux attach -t camera
+
+👉 SE ISTO FUNCIONAR:
+tmux está validado para headless.
+=======================================================
+========================================================
+FASE 5.5 – CONFIRMAÇÃO EDIÇÃO CRÍTICA VIA MAC (ANTES DO OTG)
+========================================================
+
+OBJETIVO
+--------
+- Garantir que QUALQUER edição sensível é feita remotamente
+- Validar SSH, tmux e controlo sem usar o teclado do Pi
+- Usar o Mac como “rede de segurança” ANTES do ponto sem retorno
+
+--------------------------------------------------------
+PRÉ-CONDIÇÕES
+--------------------------------------------------------
+- Pi ainda com teclado e monitor ligados
+- tmux já testado e funcional
+- Stream a correr dentro do tmux
+- Mac ligado à mesma rede (Wi-Fi ou Ethernet)
+
+--------------------------------------------------------
+PASSO 1 – CONFIRMAR IP DO PI
+--------------------------------------------------------
+No Pi:
+hostname -I
+
+Guardar o IP (ex: 192.168.x.x)
+
+--------------------------------------------------------
+PASSO 2 – LIGAR POR SSH A PARTIR DO MAC
+--------------------------------------------------------
+No Mac (Terminal):
+
+ssh -o ServerAliveInterval=10 -o ServerAliveCountMax=3 pi@IP_DO_PI
+
+Confirmar:
+- login funciona
+- comandos respondem
+- sessão é estável
+
+--------------------------------------------------------
+PASSO 3 – VALIDAR tmux REMOTAMENTE
+--------------------------------------------------------
+Ainda no SSH (Mac → Pi):
+
+tmux ls
+tmux attach -t camera
+
+Confirmar:
+- stream continua ativo
+- tmux recupera sessão corretamente
+
+Sair sem matar:
+Ctrl+B depois D
+
+--------------------------------------------------------
+PASSO 4 – REGRA DE SEGURANÇA (IMPORTANTE)
+--------------------------------------------------------
+A partir deste ponto:
+- QUALQUER edição de ficheiros críticos
+  (config.txt, cmdline.txt, serviços)
+  será feita **exclusivamente via SSH a partir do Mac**
+- O teclado do Pi passa a ser apenas contingência
+
+👉 Só avançar para a configuração OTG
+👉 depois desta fase estar 100% validada
+
+========================================================
+
+========================================================
+FASE 6 – CONFIGURAR USB ETHERNET (OTG CORRETO)
+========================================================
+Editar config.txt:
 sudo nano /boot/firmware/config.txt
 
 Adicionar no FIM:
 dtoverlay=dwc2
-enable_uart=1
 
 Guardar e sair.
 
-NÃO editar cmdline.txt aqui.
-NÃO reiniciar ainda.
-
-========================================================
-FASE 6 – EDITAR cmdline.txt VIA MAC (PASSO CRÍTICO)
-========================================================
-1) Garantir Pi ligado ao Wi-Fi
-2) No Mac:
-
-ssh pi@pi.local
-(ou ssh pi@IP_DO_PI)
-
-3) No SSH:
+Editar cmdline.txt:
 sudo nano /boot/firmware/cmdline.txt
 
-4) APAGAR TODA A LINHA
-5) COLAR A LINHA COMPLETA (fornecida à parte)
-   (toda numa linha, sem ENTER no meio)
+⚠️ UMA ÚNICA LINHA
 
-6) Guardar e sair.
+Adicionar (após rootwait):
+modules-load=dwc2,g_ether
 
-========================================================
-FASE 7 – REBOOT FINAL
-========================================================
+Exemplo:
+----------------------------------------
+console=serial0,115200 console=tty1 root=PARTUUID=XXXX rootfstype=ext4 fsck.repair=yes rootwait modules-load=dwc2,g_ether
+----------------------------------------
+
+Guardar.
+
+REBOOT (ÚNICO):
 sudo reboot
 
-Após reboot:
-- Sistema deve arrancar
-- Teclado ainda funciona
-- NÃO ligar Jetson ainda
-
-Confirmar:
-lsmod | grep dwc2
-dmesg | grep ttyGS
+========================================================
+FASE 7 – PONTO SEM RETORNO
+========================================================
+1) Desligar monitor e teclado do Pi
+2) Ligar:
+   - micro-USB do Pi (porta do teclado)
+   - → USB-A da Jetson
+3) Alimentar o Pi
 
 ========================================================
-FASE 8 – PONTO SEM RETORNO
+FASE 8 – NA JETSON (CONFIRMAÇÃO)
 ========================================================
-1) Desligar o Pi
-2) Retirar teclado e monitor
-3) Ligar:
-   - USB OTG do Pi → USB da Jetson
-   - Alimentação no Pi
-
 Na Jetson:
-ls /dev/ttyACM*
-sudo screen /dev/ttyACM0 115200
+
+ip a
+(deve aparecer usb0 ou enx*)
+
+Ping ao Pi:
+ping 192.168.7.2
+
+Teste vídeo:
+python3
+
+----------------------------------------
+import cv2
+cap = cv2.VideoCapture("http://192.168.7.2:8080/video")
+while True:
+    ok, frame = cap.read()
+    if not ok:
+        break
+    cv2.imshow("Pi Camera", frame)
+    if cv2.waitKey(1) == 27:
+        break
+----------------------------------------
 
 ========================================================
-REGRAS DE OURO
+RESULTADO FINAL
 ========================================================
-- Nunca editar cmdline.txt no Pi
-- Nunca misturar teclado + USB gadget
+- Jetson recebe vídeo em tempo real ✔
+- Pi não precisa de monitor ✔
+- Pi não precisa de teclado ✔
+- Ligação física por cabo USB ✔
+- Código todo escrito na Jetson ✔
+- Arquitetura correta e defensável ✔
+
+========================================================
+REGRAS DE SEGURANÇA
+========================================================
+- NUNCA usar ttyGS0
+- USB ≠ câmara, USB = rede
+- Vídeo é SEMPRE stream
+- Processos críticos correm SEMPRE em tmux
 - Se OTG falhar → regravar SD
-- Não insistir em estados quebrados
 ========================================================
