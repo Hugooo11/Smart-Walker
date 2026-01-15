@@ -35,7 +35,15 @@ Advanced options (OBRIGATÓRIO):
 
 → Write
 → Eject com segurança
-
+=======================================================
+WI-fi
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+network={
+    ssid="NOME_DO_HOTSPOT"
+    psk="PASSWORD_DO_HOTSPOT"
+    key_mgmt=WPA-PSK
+}
+sudo reboot
 ========================================================
 FASE 1 – PRIMEIRO ARRANQUE (COM TECLADO)
 ========================================================
