@@ -1,0 +1,100 @@
+extrair frames :
+======================================
+source ~/seg/.venv/bin/activate
+======================================
+rm -f ~/seg/data/images/*.jpg
+
+python - << 'PY'
+import cv2, os
+
+video_path = os.path.expanduser("~/seg/data/raw_walk.mp4")
+out_dir = os.path.expanduser("~/seg/data/images")
+os.makedirs(out_dir, exist_ok=True)
+
+cap = cv2.VideoCapture(video_path)
+fps = cap.get(cv2.CAP_PROP_FPS) or 20
+
+target_fps = 2.0  # <- 2 imagens por segundo
+step = max(1, int(round(fps / target_fps)))
+
+i = 0
+saved = 0
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    if i % step == 0:
+        cv2.imwrite(os.path.join(out_dir, f"img_{saved:04d}.jpg"), frame)
+        saved += 1
+    i += 1
+
+cap.release()
+print("Frames guardados:", saved)
+print("step:", step, "| fps_video:", fps)
+PY
+=======================================================================================
+=======================================================================================
+1) Criar a pasta com as 50 imagens (amostragem uniforme)
+=======================================================================================
+python - << 'PY'
+import shutil
+from pathlib import Path
+
+src = Path.home() / "seg/data/images"
+dst = Path.home() / "seg/data/images_day2_50"
+
+# limpa e recria
+if dst.exists():
+    shutil.rmtree(dst)
+dst.mkdir(parents=True, exist_ok=True)
+
+imgs = sorted([p for p in src.iterdir() if p.suffix.lower() in [".jpg", ".jpeg", ".png"]])
+n = len(imgs)
+k = 50
+
+if n < k:
+    raise SystemExit(f"Poucas imagens: {n}. Precisamos de >= {k}")
+
+# indices uniformes ao longo do video
+idxs = [round(i*(n-1)/(k-1)) for i in range(k)]
+for j, idx in enumerate(idxs):
+    shutil.copy2(imgs[idx], dst / f"img_{j:04d}.jpg")
+
+print("OK: copiadas 50 imagens para:", dst)
+PY
+=======================================================================================
+confirmar:
+ls ~/seg/data/images_day2_50 | wc -l
+=======================================================================================
+=======================================================================================
+renomear , qdo faço unzip do dataset: na pasta do train:
+=======================================================================================
+=======================================================================================
+python3 - << 'PY'
+import re
+from pathlib import Path
+
+img_dir = Path("images")
+msk_dir = Path("masks")
+
+# renomear imagens
+for p in sorted(img_dir.glob("*.jpg")):
+    m = re.match(r"(img_\d{4})_jpg\.rf\..+\.jpg$", p.name)
+    if not m:
+        continue
+    new = img_dir / f"{m.group(1)}.jpg"
+    p.rename(new)
+
+# renomear masks
+for p in sorted(msk_dir.glob("*_mask.png")):
+    m = re.match(r"(img_\d{4})_jpg\.rf\..+_mask\.png$", p.name)
+    if not m:
+        continue
+    new = msk_dir / f"{m.group(1)}.png"
+    p.rename(new)
+
+print("Renomeacao concluida.")
+print("Exemplos imagens:", [x.name for x in sorted(img_dir.glob('*.jpg'))[:5]])
+print("Exemplos masks:", [x.name for x in sorted(msk_dir.glob('*.png'))[:5]])
+PY
+=======================================================================================
