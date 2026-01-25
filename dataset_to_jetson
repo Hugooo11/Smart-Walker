@@ -1,0 +1,125 @@
+scp best.onnx best.onnx.data jetson@IP_DA_JETSON:~/walker/models/
+
+2) Compilar TensorRT Engine com trtexec
+=========================================================================
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=/home/jetson/walker/models/best.onnx \
+  --saveEngine=/home/jetson/walker/models/best_fp16.engine \
+  --fp16 \
+  --verbose
+=========================================================================
+ls -lh ~/walker/models/*.engine
+
+E para benchmark:
+/usr/src/tensorrt/bin/trtexec \
+  --loadEngine=/home/jetson/walker/models/best_fp16.engine \
+  --iterations=100 \
+  --warmUp=50 \
+  --verbose
+
+  ========================================
+RESUMO TÉCNICO – SEGMENTAÇÃO + TENSORRT
+(PROJETO ANDARILHO – HANDOVER)
+========================================
+
+HARDWARE
+--------
+- Jetson Nano (Tegra X1)
+- JetPack com TensorRT 8.2.1
+- Câmara CSI fixa no andarilho
+- Input da rede: 1x3x256x256
+- Output: 1x1x256x256 (logits de freespace)
+
+MODELO
+------
+- Rede de segmentação (U-Net pequena)
+- Treinada com ~90 imagens anotadas
+- Split recomendado: 70 train / 10 val / 10 test
+- Anotação conservadora:
+  - Verde = espaço realmente navegável
+  - Vermelho = obstáculos + chão sob cadeiras + cortinas
+  - Tudo o que o andarilho não pode ocupar é VERMELHO
+
+EXPORT
+------
+- Exportado do PyTorch para ONNX
+- Opset compatível com TensorRT 8.2
+- Export gerou:
+  - best.onnx
+  - best.onnx.data
+- Ambos copiados juntos para a Jetson (mesma pasta)
+
+TENSORRT – BUILD
+----------------
+Engine compilado na Jetson com:
+- FP16 ativado
+- Modelo estático (implicit batch)
+- NÃO usar --shapes (dava erro)
+
+Comando usado:
+trtexec \
+  --onnx=best.onnx \
+  --saveEngine=best_fp16_io.engine \
+  --fp16 \
+  --inputIOFormats=fp16:chw \
+  --outputIOFormats=fp16:chw \
+  --workspace=1024
+
+(sem --shapes)
+
+CONFIRMAÇÃO ENGINE
+------------------
+Bindings verificados via TensorRT Python API:
+
+Bindings:
+- input  : DataType.FLOAT (1,3,256,256)
+- logits : DataType.FLOAT (1,1,256,256)
+
+NOTA:
+- IO continua FLOAT
+- Compute interno usa FP16 tactics
+- Aceita IO fp16 (testado com trtexec)
+- Engine funcional e estável
+
+BENCHMARK (OFICIAL)
+-------------------
+Benchmark feito com:
+- --useCudaGraph
+- --noDataTransfers
+- warmUp = 200
+- iterations = 200
+
+Resultados:
+- Throughput: ~25 FPS
+- Latência média: ~39.6 ms
+- P99: ~50 ms
+- H2D/D2H = 0 ms (compute puro)
+
+Conclusão:
+- ~25 FPS só da rede
+- Realista esperar 15–25 FPS end-to-end no sistema completo
+
+INTERPRETAÇÃO
+-------------
+- Performance adequada para andarilho
+- ROI + lógica de navegação devem assumir ~15 FPS estáveis
+- Rede NÃO é o bottleneck principal
+
+PRÓXIMOS PASSOS
+---------------
+1) Integrar engine no loop da câmara CSI
+2) Preprocess: resize 1280x720 -> 256x256 + normalização
+3) Pós-process:
+   - sigmoid / threshold
+   - ROI por distância (0.5m – 2.5m)
+   - cálculo de path_ratio + boxes + steering
+4) Medir FPS real com câmara ligada
+
+========================================
+FIM DO RESUMO
+========================================
+
+
+
+
+  
