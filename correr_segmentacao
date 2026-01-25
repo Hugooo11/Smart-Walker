@@ -9,3 +9,10 @@ nano run_seg_trt.py
 RUN_DIR = "/home/jetson/walker/results/run_YYYYMMDD_HHMMSS"
 Passo C — corre o TRT em paralelo
 python3 run_seg_trt.py
+
+
+
+chmod +x captura.sh run_all.sh
+./run_all.sh
+
+scp jetson@192.168.1.207:~/walker/run/..... ~/seg/ok/
