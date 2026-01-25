@@ -1,0 +1,11 @@
+Passo A — começa a captura
+./captura_tr.sh
+
+Passo B-em paralelo
+python3 run_seg_trt.py "$OUT"
+
+Passo B — mete o mesmo OUT no RUN_DIR
+nano run_seg_trt.py
+RUN_DIR = "/home/jetson/walker/results/run_YYYYMMDD_HHMMSS"
+Passo C — corre o TRT em paralelo
+python3 run_seg_trt.py
