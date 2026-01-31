@@ -5,6 +5,7 @@ scp best.onnx best.onnx.data jetson@IP_DA_JETSON:~/walker/models/
 /usr/src/tensorrt/bin/trtexec \
   --onnx=/home/jetson/walker/models/best.onnx \
   --saveEngine=/home/jetson/walker/models/best_fp16.engine \
+  --workspace=2048 \
   --fp16 \
   --verbose
 =========================================================================
