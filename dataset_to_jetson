@@ -152,7 +152,12 @@ cd /home/jetson/walker/models/engines
   --saveEngine=best_256_fp16.engine \
   --fp16 \
   --workspace=1024
+########################testes###############################################################
+cd /home/jetson/walker/models/engines
 
+/usr/src/tensorrt/bin/trtexec --loadEngine=best_256_fp16.engine --warmUp=100 --duration=10
+/usr/src/tensorrt/bin/trtexec --loadEngine=best_384_fp16.engine --warmUp=100 --duration=10
+/usr/src/tensorrt/bin/trtexec --loadEngine=best_512_fp16.engine --warmUp=100 --duration=10
 
 
   
