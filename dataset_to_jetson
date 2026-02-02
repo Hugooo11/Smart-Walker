@@ -128,6 +128,16 @@ alternativa ao 2)
   --workspace=2048 \
   --shapes=input:1x3x256x256 \
   --verbose
+----------------------------------------------------------------------------------
+cd /home/jetson/walker/models
+mkdir -p engines
+
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=best_384.onnx \
+  --saveEngine=engines/best_384_fp16.engine \
+  --fp16 \
+  --workspace=2048
+
 
 
 
