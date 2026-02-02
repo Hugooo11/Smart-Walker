@@ -138,7 +138,7 @@ cd /home/jetson/walker/models/engines
   --onnx=best_384.onnx \
   --saveEngine=best_384_fp16.engine \
   --fp16 \
-  --workspace=2048
+  --workspace=1024
 
 
 
