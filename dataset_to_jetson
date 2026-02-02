@@ -132,10 +132,12 @@ alternativa ao 2)
 cd /home/jetson/walker/models
 mkdir -p engines
 igual para as tres dimensoes:
+pwd
+# deve dar /home/jetson/walker/models/engines
 
 /usr/src/tensorrt/bin/trtexec \
-  --onnx=best_384.onnx \
-  --saveEngine=engines/best_384_fp16.engine \
+  --onnx=../best_384.onnx \
+  --saveEngine=best_384_fp16.engine \
   --fp16 \
   --workspace=2048
 
