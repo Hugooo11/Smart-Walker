@@ -131,6 +131,7 @@ alternativa ao 2)
 ----------------------------------------------------------------------------------
 cd /home/jetson/walker/models
 mkdir -p engines
+igual para as tres dimensoes:
 
 /usr/src/tensorrt/bin/trtexec \
   --onnx=best_384.onnx \
