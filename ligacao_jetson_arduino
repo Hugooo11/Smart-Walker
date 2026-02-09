@@ -109,3 +109,13 @@ SE APARECER PROBLEMA (raros):
 ========================================
 FIM DO CHECKLIST
 ========================================
+echo -e "FORWARD\n" > /dev/ttyACM0
+sleep 1
+echo -e "STOP\n" > /dev/ttyACM0
+------------------------------------------
+echo -e "FORWARD\n" > /dev/ttyACM0   # solta travões
+sleep 1
+echo -e "LEFT\n" > /dev/ttyACM0      # solta travões
+sleep 1
+echo -e "STOP\n" > /dev/ttyACM0      # trava
+
