@@ -1,0 +1,111 @@
+========================================
+CHECKLIST — LIGAÇÃO JETSON ↔ ARDUINO (USB)
+========================================
+
+PRÉ-CONDIÇÕES (confirmar antes de ligar):
+----------------------------------------
+[ ] Bateria 12V ligada à shield pelo JACK
+[ ] Regulador da shield ativo (5V/logic OK)
+[ ] Arduino Mega alimentado pela shield (pelos pinos)
+[ ] Jetson Nano alimentada pela fonte própria dela
+[ ] Nenhum fio solto / curto visível
+[ ] Servos/travões ligados corretamente
+
+----------------------------------------
+PASSO 1 — LIGAR ALIMENTAÇÃO DO SISTEMA
+----------------------------------------
+[ ] Ligar a bateria
+[ ] Confirmar:
+    - LEDs da shield ligados
+    - Arduino Mega liga (LED ON aceso)
+
+----------------------------------------
+PASSO 2 — LIGAR USB (Cabo normal Arduino ↔ Jetson)
+----------------------------------------
+[ ] Ligar cabo USB Arduino Mega → Jetson Nano
+[ ] NÃO ligar/desligar a bateria neste momento
+[ ] Observar:
+    - Arduino pode dar reset (normal)
+
+----------------------------------------
+PASSO 3 — VERIFICAR NA JETSON
+----------------------------------------
+No terminal da Jetson:
+
+[ ] Executar:
+    dmesg | tail
+
+[ ] Ver se aparece algo do tipo:
+    ttyACM0
+    cdc_acm
+    Arduino
+
+[ ] Executar:
+    ls /dev/ttyACM*
+
+[ ] Confirmar que existe:
+    /dev/ttyACM0   (ou ACM1)
+
+----------------------------------------
+PASSO 4 — TESTE DE COMUNICAÇÃO MANUAL
+----------------------------------------
+[ ] Abrir a porta série:
+    screen /dev/ttyACM0 115200
+
+[ ] Ver se o Arduino escreve algo (ex: READY)
+[ ] Se nada aparecer:
+    - pressionar RESET no Arduino
+    - observar se aparece texto
+
+[ ] Para sair do screen:
+    Ctrl + A
+    depois D
+
+----------------------------------------
+PASSO 5 — TESTE SIMPLES VIA PYTHON (JETSON)
+----------------------------------------
+[ ] Criar script teste:
+
+    import serial, time
+    ser = serial.Serial("/dev/ttyACM0", 115200, timeout=0.1)
+    time.sleep(2)
+    ser.write(b"FORWARD\n")
+    time.sleep(1)
+    ser.write(b"LEFT\n")
+    time.sleep(1)
+    ser.write(b"RIGHT\n")
+    time.sleep(1)
+    ser.write(b"STOP\n")
+
+[ ] Executar o script
+[ ] Confirmar:
+    - Arduino recebe comandos
+    - Travões reagem como esperado
+
+----------------------------------------
+PASSO 6 — OBSERVAR COMPORTAMENTO
+----------------------------------------
+[ ] USB NÃO desconecta sozinho
+[ ] Arduino NÃO entra em loop de reset
+[ ] Jetson NÃO reinicia
+[ ] Nenhum componente aquece anormalmente
+
+----------------------------------------
+SE TUDO ESTIVER OK:
+----------------------------------------
+[ OK ] USB normal é seguro neste setup
+[ OK ] Não é necessário cabo data-only
+[ OK ] Seguir para integração final do código
+
+----------------------------------------
+SE APARECER PROBLEMA (raros):
+----------------------------------------
+[ ] Resets frequentes → rever alimentação 5V
+[ ] USB desaparece → considerar:
+    - cabo melhor
+    - condensadores
+    - USB data-only / isolador
+
+========================================
+FIM DO CHECKLIST
+========================================
