@@ -143,7 +143,7 @@ cd /home/jetson/walker/models/engines
 
 /usr/src/tensorrt/bin/trtexec \
   --onnx=best_512.onnx \
-  --saveEngine=best512_fp16.engine \
+  --saveEngine=best_512_fp16.engine \
   --fp16 \
   --workspace=1024
 
